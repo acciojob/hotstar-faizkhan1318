@@ -10,6 +10,7 @@ import com.driver.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.swing.*;
 import java.util.Date;
 import java.util.List;
 
@@ -54,8 +55,26 @@ public class SubscriptionService {
         //If you are already at an ElITE subscription : then throw Exception ("Already the best Subscription")
         //In all other cases just try to upgrade the subscription and tell the difference of price that user has to pay
         //update the subscription in the repository
+        User user = userRepository.findById(userId).get();
+        Subscription userSubscription = user.getSubscription();
+        if(userSubscription.getSubscriptionType().toString().equals("ELITE")){
+            throw new Exception("Already the best Subscription");
+        }
 
-        return null;
+        int prevSubscriptionPaid = userSubscription.getTotalAmountPaid();
+        int currPaid = 0;
+
+        if(userSubscription.getSubscriptionType().toString().equals("BASIC")){
+            currPaid = 800 + (250 * userSubscription.getNoOfScreensSubscribed());
+            userSubscription.setSubscriptionType(SubscriptionType.PRO);
+        }else{
+            currPaid = 1000 + (350 * userSubscription.getNoOfScreensSubscribed());
+            userSubscription.setSubscriptionType(SubscriptionType.ELITE);
+        }
+
+        subscriptionRepository.save(userSubscription);
+
+        return currPaid - prevSubscriptionPaid;
     }
 
     public Integer calculateTotalRevenueOfHotstar(){
@@ -63,7 +82,14 @@ public class SubscriptionService {
         //We need to find out total Revenue of hotstar : from all the subscriptions combined
         //Hint is to use findAll function from the SubscriptionDb
 
-        return null;
+        List<Subscription> subscriptionList = subscriptionRepository.findAll();
+
+        int revenue = 0;
+        for(Subscription subscription : subscriptionList){
+            revenue += subscription.getTotalAmountPaid();
+        }
+
+        return revenue;
     }
 
 }
